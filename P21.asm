@@ -1,0 +1,83 @@
+.include "miniprojectUtils.asm"
+
+.macro digit_sum(%label)
+	
+	# v0 = sum([i for i in str( %label )])
+	pushRegister($t0)
+	pushRegister($t1)
+	pushRegister($t2)
+
+	#Initialize:
+	lw $t0, %label  			# t0 = value of %label
+							# t1 = Condition
+							# t2 = intermediate				
+	li $v0, 0
+
+digit_loop:
+	#Now inside digit loop
+	
+digit_condition:
+	sgt $t1, $t0, 0				# t0 > 0?
+	beqz $t1,end_digit_loop
+
+digit_action:
+	rem $t2, $t0, 10
+	# print each element in value
+	sw $t2, tempt				
+	printIntLabel(tempt)
+	
+	add $v0, $v0, $t2  			# sum += ( value %10 )
+	
+	div $t0,$t0, 10				# t0 /= 10
+	
+	beqz $t0, skip_plus_char
+	printLiteral(" + ")
+	
+skip_plus_char:
+	j digit_loop
+
+end_digit_loop:
+	printLiteral(" = ")
+	# print sum of all elements
+	sw $v0, tempt
+	printIntLabel(tempt)
+	slti $t2, $v0, 10
+	bnez $t2, skip_next_char
+	printLiteral(" --> ")
+	skip_next_char:
+	
+	popRegister($t2)
+	popRegister($t1)
+	popRegister($t0)
+
+.end_macro
+
+main:
+.data 
+	initial_value: .word 0
+	order: .word 0
+	tempt: .word 0
+	promptString: .asciiz "Input a valid value: "
+	outputString: .asciiz "digitDegree(n) = "
+.text
+	getIntDialog(initial_value, promptString)
+
+while:
+
+while_condition:
+	lw $v0, initial_value
+	sge $t0, $v0, 10			# initial_value >= 10 ?
+	beqz $t0,end_while
+
+while_action:
+	digit_sum(initial_value)
+	sw $v0, initial_value		# initial_value = sum( [i for i in str(initial_value)])
+
+	increaseBy1(order)
+	j while
+	
+end_while:
+	printLiteral("\n")
+	printStringLabel(outputString)
+	printIntLabel(order)
+end_main:
